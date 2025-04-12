@@ -3,6 +3,7 @@ using Gallery.Server.Data.db;
 using Gallery.Server.Interfaces;
 using Gallery.Server.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,8 +69,11 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
-//app.UseDefaultFiles();
-//app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")),
+    RequestPath = "/default"
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -82,7 +86,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-//app.MapFallbackToFile("/index.html");
 
 app.Run();

@@ -23,9 +23,7 @@ const AuthForm = () => {
     }
 
     try {
-      const url = isLogin
-        ? "https://localhost:32791/api/auth/login"
-        : "https://localhost:32791/api/auth/register";
+      const url = isLogin ? "/api/auth/login" : "/api/auth/register";
 
       const payload = isLogin
         ? { username: formData.username, password: formData.password }
@@ -38,11 +36,6 @@ const AuthForm = () => {
       const response = isLogin
         ? await axios.patch(url, payload)
         : await axios.post(url, payload);
-      console.log(
-        `${isLogin ? "Login" : "Registration"} successful:`,
-        response.data
-      );
-      alert(`${isLogin ? "Login" : "Registration"} successful!`);
     } catch (error) {
       console.error(
         `Error during ${isLogin ? "login" : "registration"}:`,

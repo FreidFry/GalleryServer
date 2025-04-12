@@ -4,6 +4,8 @@ using Gallery.Server.Data.db;
 using Gallery.Server.Models.User;
 using Gallery.Server.Models.User.DTO;
 using Gallery.Server.Interfaces;
+using Gallery.Server.Services;
+using Microsoft.Extensions.Options;
 
 namespace Gallery.Server.Controllers
 {
@@ -15,12 +17,14 @@ namespace Gallery.Server.Controllers
         private readonly UsersDbContext _usersDbContext;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtProvider _jwtProvider;
+        private readonly JwtOptions _envOptions;
 
-        public AuthController(UsersDbContext users, IPasswordHasher passwordHasher, IJwtProvider jwtProvider)
+        public AuthController(UsersDbContext users, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IOptions<JwtOptions> envOptions)
         {
             _usersDbContext = users;
             _passwordHasher = passwordHasher;
             _jwtProvider = jwtProvider;
+            _envOptions = envOptions.Value;
         }
 
         [HttpPost("register")]
@@ -55,14 +59,25 @@ namespace Gallery.Server.Controllers
                 return Unauthorized("Invalid password");
             }
 
+            var expiration = DateTimeOffset.UtcNow.AddDays(_envOptions.ExpiresDays);
+
             var token = _jwtProvider.GenerateToken(user);
+
+            Response.Cookies.Append("jwt", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/",
+                Expires = expiration
+            });
 
             user.UpdateLastLogin();
 
-
             _usersDbContext.Users.Update(user);
             await _usersDbContext.SaveChangesAsync();
-            return Ok(token);
+
+            return Ok(new { Message = "Login successful" });
         }
     }
 }
