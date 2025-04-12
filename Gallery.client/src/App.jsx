@@ -1,13 +1,19 @@
-import "./App.css";
-import AuthForm from "./components/AuthForm";
+import React from "react";
+import { Route, Routes, BrowserRouter } from "react-router-dom";
+import Gallery from "./pages/Gallery";
+import Auth from "./pages/Auth";
 
-function App() {
+export default function App() {
   return (
     <div className="App">
-      <h1>Authentication</h1>
-      <AuthForm />
+      <BrowserRouter>
+        <Routes>
+          <>
+            <Route path="/" element={<Auth />} />
+            <Route path="Gallery" element={<Gallery />} />
+          </>
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
-
-export default App;

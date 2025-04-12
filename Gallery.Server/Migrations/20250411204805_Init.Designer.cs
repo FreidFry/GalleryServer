@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gallery.Server.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20250410135738_UserInit")]
-    partial class UserInit
+    [Migration("20250411204805_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -15,8 +15,8 @@ const LoginForm = () => {
 
     try {
       const url = isLogin
-        ? "https://localhost:8080/api/login"
-        : "https://localhost:8080/api/register";
+        ? "https://localhost:32777/api/auth/login"
+        : "https://localhost:32777/api/register";
 
       const payload = isLogin
         ? { username: formData.username, password: formData.password }

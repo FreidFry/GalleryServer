@@ -60,10 +60,16 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+    dbContext.Database.Migrate();
+}
+
 app.UseCors("AllowAll");
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
+//app.UseDefaultFiles();
+//app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
@@ -77,6 +83,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapFallbackToFile("/index.html");
+//app.MapFallbackToFile("/index.html");
 
 app.Run();
