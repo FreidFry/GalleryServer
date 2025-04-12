@@ -9,6 +9,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.db*
+*.env
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -396,3 +398,5 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+/Gallery.Server/appsettings.Development.json
