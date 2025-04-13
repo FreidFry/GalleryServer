@@ -23,7 +23,9 @@ const AuthForm = () => {
     }
 
     try {
-      const url = isLogin ? "/api/auth/login" : "/api/auth/register";
+      const url = isLogin
+        ? "https://localhost:32778/api/auth/login"
+        : "https://localhost:32778/api/auth/register";
 
       const payload = isLogin
         ? { username: formData.username, password: formData.password }

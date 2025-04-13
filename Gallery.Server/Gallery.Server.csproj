@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4c7bdad7-a3e5-4910-bf81-143bc98f2589</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <SpaRoot>..\reactapp1.client</SpaRoot>
+    <SpaRoot>..\Gallery.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:24815</SpaProxyServerUrl>
   </PropertyGroup>

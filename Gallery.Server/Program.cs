@@ -20,6 +20,14 @@ builder.Services.AddResponseCompression(options =>
 });
 
 builder.Services.AddControllers();
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(8080); // HTTP
+    options.ListenAnyIP(8081, listenOptions =>
+    {
+        listenOptions.UseHttps(); // важно
+    });
+});
 builder.Services.AddHttpsRedirection(builder =>
 {
     builder.HttpsPort = 443;

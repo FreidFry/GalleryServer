@@ -1,0 +1,6 @@
+@Gallery.Server_HostAddress = http://localhost:5239
+
+GET {{Gallery.Server_HostAddress}}/
+Accept: application/json
+
+###

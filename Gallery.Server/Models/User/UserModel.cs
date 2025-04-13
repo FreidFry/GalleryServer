@@ -21,7 +21,7 @@
             PasswordHash = passwordHash;
             CreatedAt = DateTime.UtcNow;
             LastLogin = DateTime.UtcNow;
-            AvatarFilePath = $@"{Environment.CurrentDirectory}/Data/default/img/defaultUserAvatar.png";
+            AvatarFilePath = @"/default/img/defaultUserAvatar.png";
         }
 
         public static UserModel CreateUser(string username, string passwordHash)

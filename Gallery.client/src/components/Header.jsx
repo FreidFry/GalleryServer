@@ -23,7 +23,10 @@ const Header = ({ avatarUrl, userId }) => {
       </button>
       <div className="avatar-container" onClick={toggleMenu}>
         <img
-          src={avatarUrl || "https://via.placeholder.com/50"}
+          src={
+            avatarUrl ||
+            "https://localhost:32778/default/img/defaultUserAvatar.png"
+          }
           alt="User Avatar"
           className="avatar"
         />

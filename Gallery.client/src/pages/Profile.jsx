@@ -11,7 +11,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          `https://localhost:32805/Profile/${userId}`
+          `https://localhost:32778/Profile/${userId}`
         );
         console.log("API Response:", response.data); // Логируем данные
         setProfile(response.data);
@@ -48,7 +48,7 @@ const Profile = () => {
         <strong>Avatar:</strong>
       </p>
       <img
-        src={`https://localhost:32805${profile.avatarFilePath}`}
+        src={`https://localhost:32769${profile.avatarFilePath}`}
         alt="User Avatar"
         style={{ width: "150px", height: "150px" }}
       />
