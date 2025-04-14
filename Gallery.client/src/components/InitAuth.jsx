@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const InitAuth = () => {
+export default function InitAuth({ setIsLogin }) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,20 +13,21 @@ const InitAuth = () => {
           { withCredentials: true }
         );
 
-        if (response.status.ok) {
+        if (response.status === 200) {
+          setIsLogin(true);
           navigate("/Gallery");
         } else {
+          setIsLogin(false);
           navigate("/Login");
         }
       } catch (error) {
+        setIsLogin(false);
         navigate("/Login");
       }
     };
 
     authenticate();
-  }, [navigate]);
+  }, [navigate, setIsLogin]);
 
   return <div>Initializing Authentication...</div>;
-};
-
-export default InitAuth;
+}

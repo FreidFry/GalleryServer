@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import "../css/AuthForm.css";
 
-const AuthForm = () => {
+export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
@@ -11,7 +12,7 @@ const AuthForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -54,50 +55,53 @@ const AuthForm = () => {
 
   return (
     <div className="auth-form">
-      <h2>{isLogin ? "Login" : "Register"}</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="username">Username:</label>
+      <div className="auth-container">
+        <h1>{isLogin ? "Welcome Back" : "Create an Account"}</h1>
+        <form onSubmit={handleSubmit}>
           <input
             type="text"
-            id="username"
             name="username"
+            placeholder="username"
             value={formData.username}
             onChange={handleChange}
             required
           />
-        </div>
-        <div>
-          <label htmlFor="password">Password:</label>
           <input
             type="password"
-            id="password"
             name="password"
+            placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
           />
-        </div>
-        {!isLogin && (
-          <div>
-            <label htmlFor="confirmPassword">Confirm Password:</label>
+          {!isLogin && (
             <input
               type="password"
-              id="confirmPassword"
               name="confirmPassword"
+              placeholder="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
             />
-          </div>
-        )}
-        <button type="submit">{isLogin ? "Login" : "Register"}</button>
-      </form>
-      <button onClick={toggleForm}>
-        {isLogin ? "Switch to Register" : "Switch to Login"}
-      </button>
+          )}
+          <button type="submit" className={isLogin ? "login" : "register"}>
+            {isLogin ? "Login" : "Register"}
+          </button>
+        </form>
+        <p>
+          {isLogin ? (
+            <>
+              Don't have an account?{" "}
+              <button onClick={toggleForm}>Register here</button>
+            </>
+          ) : (
+            <>
+              Already have an account?{" "}
+              <button onClick={toggleForm}>Login here</button>
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
-};
-
-export default AuthForm;
+}

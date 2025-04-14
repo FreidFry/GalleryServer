@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-const Profile = () => {
+export default function Profile() {
   const { userId } = useParams();
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
@@ -62,6 +62,4 @@ const Profile = () => {
       </p>
     </div>
   );
-};
-
-export default Profile;
+}
