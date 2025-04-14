@@ -6,6 +6,7 @@ using Gallery.Server.Models.User.DTO;
 using Gallery.Server.Interfaces;
 using Gallery.Server.Services;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Gallery.Server.Controllers
 {
@@ -78,6 +79,21 @@ namespace Gallery.Server.Controllers
             await _usersDbContext.SaveChangesAsync();
 
             return Ok(new { Message = "Login successful" });
+        }
+
+        [HttpDelete("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("jwt");
+            return Ok(new { Message = "Logout successful" });
+        }
+
+        [HttpGet("init")]
+        [Authorize]
+        public IActionResult Init()
+        {
+            return Ok(new { message = "JWT valid, user authorized" });
         }
     }
 }

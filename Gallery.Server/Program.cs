@@ -2,8 +2,17 @@ using dotenv.net;
 using Gallery.Server.Data.db;
 using Gallery.Server.Interfaces;
 using Gallery.Server.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+DotEnv.Load();
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+
+if (string.IsNullOrEmpty(jwtKey))
+    throw new Exception("JWT_SECRET_KEY is not set in environment variables");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +27,19 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.MimeTypes = ["text/plain", "text/css", "application/javascript", "application/json", "image/svg+xml"];
 });
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.TokenValidationParameters = new()
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+    };
+});
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.WebHost.ConfigureKestrel(options =>
@@ -92,6 +114,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.MapControllers();
 

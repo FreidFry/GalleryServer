@@ -37,5 +37,6 @@ namespace Gallery.Server.Services
             var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
             return tokenValue;
         }
+
     }
 }
