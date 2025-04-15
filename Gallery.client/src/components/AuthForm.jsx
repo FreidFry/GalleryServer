@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "../css/AuthForm.css";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,7 @@ export default function AuthForm() {
     password: "",
     confirmPassword: "",
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,8 +39,13 @@ export default function AuthForm() {
           };
 
       const response = isLogin
-        ? await axios.patch(url, payload)
-        : await axios.post(url, payload);
+        ? await axios.patch(url, payload, { withCredentials: true })
+        : await axios.post(url, payload, { withCredentials: true });
+
+      if (response.status === 200) {
+        navigate("/Gallery");
+      }
+      alert(`Successfully ${isLogin ? "logged in" : "registered"}!`);
     } catch (error) {
       console.error(
         `Error during ${isLogin ? "login" : "registration"}:`,

@@ -19,19 +19,18 @@ namespace Gallery.Server.Controllers.User
         [HttpGet("{UserId}")]
         public async Task<IActionResult> Get([FromRoute] string UserId)
         {
-            var user = await _usersDbContext.Users
-                .FirstOrDefaultAsync(u => u.UserId.ToString() == UserId);
+            var userDto = await _usersDbContext.Users.Where(predicate: u => u.UserId.ToString() == UserId).
+                Select(u => new UserGetDto
+                {
+                    Username = u.Username,
+                    AvatarFilePath = u.AvatarFilePath,
+                    CreatedAt = u.CreatedAt,
+                    LastLogin = u.LastLogin
+                })
+                .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (userDto == null)
                 return NotFound("User not found");
-
-            var userDto = new UserGetDto
-            {
-                Username = user.Username,
-                AvatarFilePath = user.AvatarFilePath,
-                CreatedAt = user.CreatedAt,
-                LastLogin = user.LastLogin
-            };
 
             return Ok(userDto);
         }

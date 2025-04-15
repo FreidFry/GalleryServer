@@ -40,8 +40,21 @@ namespace Gallery.Server.Controllers
 
             var newUser = UserModel.CreateUser(UserDto.Username, _passwordHasher.HashPassword(UserDto.Password));
 
+
             await _usersDbContext.Users.AddAsync(newUser);
             await _usersDbContext.SaveChangesAsync();
+
+            var expiration = DateTimeOffset.UtcNow.AddDays(_envOptions.ExpiresDays);
+            var token = _jwtProvider.GenerateToken(newUser);
+            Response.Cookies.Append("jwt", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/",
+                Expires = expiration
+            });
+            newUser.UpdateLastLogin();
 
             return Ok();
         }
@@ -89,11 +102,18 @@ namespace Gallery.Server.Controllers
             return Ok(new { Message = "Logout successful" });
         }
 
-        [HttpGet("init")]
         [Authorize]
+        [HttpGet("init")]
         public IActionResult Init()
         {
-            return Ok(new { message = "JWT valid, user authorized" });
+            try
+            {
+                return Ok(new { message = "JWT valid, user authorized" });
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = "Authorization failed", error = ex.Message });
+            }
         }
     }
 }
