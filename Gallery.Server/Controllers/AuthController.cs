@@ -102,18 +102,11 @@ namespace Gallery.Server.Controllers
             return Ok(new { Message = "Logout successful" });
         }
 
-        [Authorize]
         [HttpGet("init")]
+        [Authorize]
         public IActionResult Init()
         {
-            try
-            {
-                return Ok(new { message = "JWT valid, user authorized" });
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { message = "Authorization failed", error = ex.Message });
-            }
+            return Ok(new { message = "JWT valid, user authorized" });
         }
     }
 }
