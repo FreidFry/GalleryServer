@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  gallery-server:
+    build: .
+    container_name: gallery.server
+    ports:
+      - "32777:8080"  # HTTP
+      - "32778:8081"  # HTTPS
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - JWT_SECRET_KEY=YAMeteKUDa5a1F0RGALLERy5ervErJWT
+      - JWT_EXPIRES_DAYS=12
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=yourpassword
+    volumes:
+      # Монтируем папку с БД (файл SQLite)
+      - ./Gallery.Server/Data:/app/Data:rw
+      # Монтируем HTTPS-сертификаты (если нужны)
+      - ./https:/https
+    restart: unless-stopped

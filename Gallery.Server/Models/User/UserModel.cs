@@ -1,4 +1,6 @@
-﻿namespace Gallery.Server.Models.User
+﻿using Gallery.Server.Models.Files.Image;
+
+namespace Gallery.Server.Models.User
 {
     public class UserModel
     {
@@ -10,6 +12,8 @@
 
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime LastLogin { get; private set; }
+
+        public ICollection<ImageModel> Images { get; set; } = [];
 
 
         UserModel(string username, string passwordHash)

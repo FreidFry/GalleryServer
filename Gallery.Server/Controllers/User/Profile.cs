@@ -1,5 +1,6 @@
 ﻿using Gallery.Server.Data.db;
 using Gallery.Server.Models.User.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,12 @@ namespace Gallery.Server.Controllers.User
 {
     [Route("[controller]")]
     [ApiController]
+    [Authorize]
     public class Profile : Controller
     {
-        private readonly UsersDbContext _usersDbContext;
+        private readonly AppDbContext _usersDbContext;
 
-        public Profile(UsersDbContext usersDbContext)
+        public Profile(AppDbContext usersDbContext)
         {
             _usersDbContext = usersDbContext;
         }

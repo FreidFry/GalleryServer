@@ -8,12 +8,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-DotEnv.Load();
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
-
-if (string.IsNullOrEmpty(jwtKey))
-    throw new Exception("JWT_SECRET_KEY is not set in environment variables");
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options =>
@@ -27,6 +21,9 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.MimeTypes = ["text/plain", "text/css", "application/javascript", "application/json", "image/svg+xml"];
 });
+
+DotEnv.Load(new DotEnvOptions(envFilePaths: ["../settings.env"]));
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
     {
@@ -67,8 +64,9 @@ builder.Services.AddHttpsRedirection(builder =>
     builder.HttpsPort = 443;
 });
 
-builder.Services.AddDbContext<UsersDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services.AddCors(options =>
 {
@@ -88,10 +86,9 @@ builder.Services.AddLogging(builder =>
     builder.AddDebug();
 });
 
-DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "./Data/settings.env" }));
 builder.Services.Configure<JwtOptions>(options =>
 {
-    options.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    options.SecretKey = jwtKey
                         ?? throw new InvalidOperationException("JWT_SECRET_KEY is not configured.");
     options.ExpiresDays = double.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRES_DAYS")
                         ?? throw new InvalidOperationException("JWT_EXPIRES_DAYS is not configured."));
@@ -107,7 +104,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 }
 
@@ -117,6 +114,14 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")),
     RequestPath = "/default"
+});
+
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData")))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData"));
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData")),
+    RequestPath = "/images"
 });
 
 if (app.Environment.IsDevelopment())

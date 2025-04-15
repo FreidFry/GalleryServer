@@ -21,7 +21,7 @@ namespace Gallery.Server.Services
 
         public string GenerateToken(UserModel user)
         {
-            Claim[] claims = [new("userId", user.UserId.ToString())];
+            Claim[] claims = [new("uid", user.UserId.ToString())];
 
             var singningKey = new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)),

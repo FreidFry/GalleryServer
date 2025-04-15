@@ -16,6 +16,10 @@ export default function Header({ avatarUrl, userId, isLogin }) {
     navigate("/");
   };
 
+  const handleGalleryClick = () => {
+    navigate(`/Gallery/${userId}`);
+  };
+
   const handleClickOutside = (event) => {
     if (
       menuOpen &&
@@ -27,6 +31,8 @@ export default function Header({ avatarUrl, userId, isLogin }) {
       setMenuOpen(false);
     }
   };
+
+  useEffect(() => {});
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -40,12 +46,14 @@ export default function Header({ avatarUrl, userId, isLogin }) {
       <nav>
         <ul>
           <li>
-            <a href="#home" onClick={handleHomeClick}>
+            <a href="#" onClick={handleHomeClick}>
               Home
             </a>
           </li>
           <li>
-            <a href="#about">Gallery</a>
+            <a href="#" onClick={handleGalleryClick}>
+              Gallery
+            </a>
           </li>
         </ul>
         {isLogin && (

@@ -1,10 +1,13 @@
 import React from "react";
+import UploadForm from "../components/images/UploadForm";
+import ImageGallery from "../components/images/ImageGallery";
 
-export default function Gallery() {
+export default function Gallery({ userId }) {
   return (
     <div>
-      <h1>Gallery Page</h1>
-      <p>This is a placeholder for the Gallery page.</p>
+      <h1>Галерея</h1>
+      <UploadForm />
+      <ImageGallery userId={userId} />
     </div>
   );
 }

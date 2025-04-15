@@ -7,6 +7,7 @@ using Gallery.Server.Interfaces;
 using Gallery.Server.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Gallery.Server.Controllers
 {
@@ -15,12 +16,12 @@ namespace Gallery.Server.Controllers
     public class AuthController : ControllerBase
     {
 
-        private readonly UsersDbContext _usersDbContext;
+        private readonly AppDbContext _usersDbContext;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtProvider _jwtProvider;
         private readonly JwtOptions _envOptions;
 
-        public AuthController(UsersDbContext users, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IOptions<JwtOptions> envOptions)
+        public AuthController(AppDbContext users, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IOptions<JwtOptions> envOptions)
         {
             _usersDbContext = users;
             _passwordHasher = passwordHasher;
@@ -106,7 +107,11 @@ namespace Gallery.Server.Controllers
         [Authorize]
         public IActionResult Init()
         {
-            return Ok(new { message = "JWT valid, user authorized" });
+            string uid = User.FindFirstValue("uid");
+            return Ok(new
+            {
+                userId = uid
+            });
         }
     }
 }
