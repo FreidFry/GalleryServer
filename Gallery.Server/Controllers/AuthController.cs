@@ -1,13 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Gallery.Server.Data.db;
-using Gallery.Server.Models.User;
-using Gallery.Server.Models.User.DTO;
-using Gallery.Server.Interfaces;
-using Gallery.Server.Services;
-using Microsoft.Extensions.Options;
+using Gallery.Server.Features.User.DTO;
+using Gallery.Server.Features.User.Services;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace Gallery.Server.Controllers
 {
@@ -15,91 +9,29 @@ namespace Gallery.Server.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-
-        private readonly AppDbContext _usersDbContext;
-        private readonly IPasswordHasher _passwordHasher;
-        private readonly IJwtProvider _jwtProvider;
-        private readonly JwtOptions _envOptions;
-
-        public AuthController(AppDbContext users, IPasswordHasher passwordHasher, IJwtProvider jwtProvider, IOptions<JwtOptions> envOptions)
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService)
         {
-            _usersDbContext = users;
-            _passwordHasher = passwordHasher;
-            _jwtProvider = jwtProvider;
-            _envOptions = envOptions.Value;
+            _authService = authService;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegisterDto UserDto)
+        public async Task<IActionResult> Register([FromBody] UserRegisterDto userDto)
         {
-            if (!ModelState.IsValid || UserDto.Password != UserDto.ConfirmPassword)
-                return BadRequest(ModelState);
-            var existingUser = await _usersDbContext.Users
-                .FirstOrDefaultAsync(u => u.Username == UserDto.Username);
-
-            if (existingUser != null) return Conflict("User already exists");
-
-            var newUser = UserModel.CreateUser(UserDto.Username, _passwordHasher.HashPassword(UserDto.Password));
-
-
-            await _usersDbContext.Users.AddAsync(newUser);
-            await _usersDbContext.SaveChangesAsync();
-
-            var expiration = DateTimeOffset.UtcNow.AddDays(_envOptions.ExpiresDays);
-            var token = _jwtProvider.GenerateToken(newUser);
-            Response.Cookies.Append("jwt", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-                Expires = expiration
-            });
-            newUser.UpdateLastLogin();
-
-            return Ok();
+            return await _authService.RegisterAsync(userDto, HttpContext);
         }
 
-        [HttpPatch("login")]
-        public async Task<IActionResult> Login([FromBody] UserLoginDto UserDto)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] UserLoginDto userDto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = await _usersDbContext.Users
-                .FirstOrDefaultAsync(u => u.Username == UserDto.Username);
-
-            if (user == null) return NotFound("User not found");
-            if (!_passwordHasher.VerifyPassword(UserDto.Password, user.PasswordHash))
-            {
-                return Unauthorized("Invalid password");
-            }
-
-            var expiration = DateTimeOffset.UtcNow.AddDays(_envOptions.ExpiresDays);
-
-            var token = _jwtProvider.GenerateToken(user);
-
-            Response.Cookies.Append("jwt", token, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-                Expires = expiration
-            });
-
-            user.UpdateLastLogin();
-
-            _usersDbContext.Users.Update(user);
-            await _usersDbContext.SaveChangesAsync();
-
-            return Ok(new { Message = "Login successful" });
+            return await _authService.Login(userDto, HttpContext);
         }
 
-        [HttpDelete("logout")]
+        [HttpPost("logout")]
         [Authorize]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("jwt");
+            _authService.Logout(HttpContext);
             return Ok(new { Message = "Logout successful" });
         }
 
@@ -107,11 +39,8 @@ namespace Gallery.Server.Controllers
         [Authorize]
         public IActionResult Init()
         {
-            string uid = User.FindFirstValue("uid");
-            return Ok(new
-            {
-                userId = uid
-            });
+            var uid = _authService.Init(User);
+            return Ok(new { userId = uid });
         }
     }
 }

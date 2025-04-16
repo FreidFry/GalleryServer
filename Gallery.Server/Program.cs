@@ -1,7 +1,9 @@
 using dotenv.net;
-using Gallery.Server.Data.db;
-using Gallery.Server.Interfaces;
-using Gallery.Server.Services;
+using Gallery.Server.Core.Interfaces;
+using Gallery.Server.Core.Services;
+using Gallery.Server.Features.Image.Services;
+using Gallery.Server.Features.User.Services;
+using Gallery.Server.Infrastructure.Persistence.db;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -96,6 +98,8 @@ builder.Services.Configure<JwtOptions>(options =>
 
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

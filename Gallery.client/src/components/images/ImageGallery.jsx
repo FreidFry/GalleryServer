@@ -9,7 +9,7 @@ export default function ImageGallery({ userId }) {
     if (!userId) return;
 
     axios
-      .get(`https://localhost:32778/image/${userId}`, {
+      .get(`https://localhost:32778/image/getall/${userId}`, {
         withCredentials: true,
       })
       .then((res) => setImages(res.data))
