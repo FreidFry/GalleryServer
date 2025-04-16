@@ -26,7 +26,7 @@ namespace Gallery.Server.Models.Files.Image
             Name = name;
             ImageFilePath = Path.Combine(Environment.CurrentDirectory, "Data", "UsersData", user.UserId.ToString(), "Gallery", $"{ImageId}_{fileName}");
             Description = description ?? string.Empty;
-            ImageUrl = $"/images/{user.UserId}/{ImageId}_{fileName}";
+            ImageUrl = $"images/{user.UserId}/Gallery/{ImageId}_{fileName}";
             CreateAt = DateTime.UtcNow;
             Publicity = publicity ?? true;
             User = user;
