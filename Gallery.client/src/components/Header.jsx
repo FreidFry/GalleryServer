@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../css/Header.css";
+import axios from "axios";
 
 export default function Header({ avatarUrl, userId, isLogin }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,7 +18,25 @@ export default function Header({ avatarUrl, userId, isLogin }) {
   };
 
   const handleGalleryClick = () => {
-    navigate(`/Gallery/${userId}`);
+    navigate(`/Gallery`);
+  };
+
+  const handleLogoutClick = () => {
+    axios
+      .post(
+        "https://localhost:32778/api/auth/logout",
+        {},
+        {
+          withCredentials: true,
+        }
+      )
+      .then(() => {
+        navigate("/login");
+      })
+      .catch((error) => {
+        console.error("Logout error:", error);
+        alert("Logout failed! Please try again.");
+      });
   };
 
   const handleClickOutside = (event) => {
@@ -32,8 +51,6 @@ export default function Header({ avatarUrl, userId, isLogin }) {
     }
   };
 
-  useEffect(() => {});
-
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -46,12 +63,12 @@ export default function Header({ avatarUrl, userId, isLogin }) {
       <nav>
         <ul>
           <li>
-            <a href="#" onClick={handleHomeClick}>
+            <a href="" onClick={handleHomeClick}>
               Home
             </a>
           </li>
           <li>
-            <a href="#" onClick={handleGalleryClick}>
+            <a href="" onClick={handleGalleryClick}>
               Gallery
             </a>
           </li>
@@ -72,15 +89,9 @@ export default function Header({ avatarUrl, userId, isLogin }) {
             />
             {menuOpen && (
               <div className="dropdown-menu" ref={menuRef}>
-                <Link to={`/Profile/${userId}`}>Profile</Link>
+                <Link to={`/Profile`}>Profile</Link>
                 <Link to="/Gallery">Gallery</Link>
-                <button
-                  onClick={() =>
-                    alert("Logout functionality not implemented yet!")
-                  }
-                >
-                  Logout
-                </button>
+                <button onClick={() => handleLogoutClick()}>Logout</button>
               </div>
             )}
           </div>

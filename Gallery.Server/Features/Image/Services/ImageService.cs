@@ -1,4 +1,4 @@
-﻿using Gallery.Server.Features.Image.Dto;
+﻿using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +16,7 @@ namespace Gallery.Server.Features.Image.Services
             _AppDbContext = dbContext;
         }
 
-        public async Task<IActionResult> Upload( ImageUploadDto request, HttpContext httpContext)
+        public async Task<IActionResult> Upload(ImageUploadDto request, HttpContext httpContext)
         {
             string userId = httpContext.User.FindFirstValue("uid");
 
@@ -46,7 +46,7 @@ namespace Gallery.Server.Features.Image.Services
             return new OkResult();
         }
 
-        public async Task<IEnumerable<ImageModel>> GetAll( string TargetUid, HttpContext httpContext)
+        public async Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, HttpContext httpContext)
         {
             string cookieUid = httpContext.User.FindFirstValue("uid");
             bool isOwner = false;
@@ -57,16 +57,17 @@ namespace Gallery.Server.Features.Image.Services
 
             if (isOwner)
             {
-                var imgs = await _AppDbContext.Images
-                    .Where(x => x.UserId == Guid.Parse(cookieUid))
+                var imgs = await _AppDbContext.Images.Where(u => u.UserId == Guid.Parse(TargetUid))
+                    .Select(i => ImageGetDto.FromModel(i))
                     .ToListAsync();
                 return imgs;
             }
-            var images = await _AppDbContext.Images
+            var imgsNoPublish = await _AppDbContext.Images
                 .Where(x => x.UserId == Guid.Parse(TargetUid) && x.Publicity == false)
+                .Select(i => ImageGetDto.FromModel(i))
                 .ToListAsync();
 
-            return images;
+            return imgsNoPublish;
         }
     }
 }

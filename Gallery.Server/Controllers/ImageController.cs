@@ -1,4 +1,4 @@
-﻿using Gallery.Server.Features.Image.Dto;
+﻿using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Features.Image.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function Profile() {
-  const { userId } = useParams();
+  const { userId } = useParams("s");
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState(null);
 
@@ -11,7 +11,8 @@ export default function Profile() {
     const fetchProfile = async () => {
       try {
         const response = await axios.get(
-          `https://localhost:32778/Profile/${userId}`
+          `https://localhost:32778/profile/${userId}`,
+          { withCredentials: true }
         );
         console.log("API Response:", response.data); // Логируем данные
         setProfile(response.data);

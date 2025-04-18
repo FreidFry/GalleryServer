@@ -1,39 +1,36 @@
-﻿using Gallery.Server.Features.User.DTO;
-using Gallery.Server.Infrastructure.Persistence.db;
+﻿using Gallery.Server.Features.Profile.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Gallery.Server.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    [Authorize]
     public class ProfileController : Controller
     {
-        private readonly AppDbContext _usersDbContext;
+        private readonly IProfileService _profileService;
 
-        public ProfileController(AppDbContext usersDbContext)
+        public ProfileController(IProfileService profileService)
         {
-            _usersDbContext = usersDbContext;
+            _profileService = profileService;
         }
 
         [HttpGet("{UserId}")]
-        public async Task<IActionResult> Get([FromRoute] string UserId)
+        public async Task<IActionResult> GetById([FromRoute] string UserId)
         {
-            var userDto = await _usersDbContext.Users.Where(predicate: u => u.UserId.ToString() == UserId).
-                Select(u => new UserGetDto
-                {
-                    Username = u.Username,
-                    AvatarFilePath = u.AvatarFilePath,
-                    CreatedAt = u.CreatedAt,
-                    LastLogin = u.LastLogin
-                })
-                .FirstOrDefaultAsync();
-
+            var userDto = await _profileService.GetByUdAsync(UserId);
             if (userDto == null)
-                return NotFound("User not found");
+                return NotFound();
+            return Ok(userDto);
+        }
 
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetCurrent()
+        {
+            var userDto = await _profileService.GetCurrentAsync(HttpContext);
+            if (userDto == null)
+                return NotFound();
             return Ok(userDto);
         }
     }

@@ -16,6 +16,7 @@ services:
     volumes:
       # Монтируем папку с БД (файл SQLite)
       - ./Gallery.Server/Data:/app/Data:rw
+      - ./Gallery.Server/Data/default:/app/Data/default:rw
       # Монтируем HTTPS-сертификаты (если нужны)
       - ./https:/https
     restart: unless-stopped

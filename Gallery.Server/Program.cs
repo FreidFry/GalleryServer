@@ -2,6 +2,7 @@ using dotenv.net;
 using Gallery.Server.Core.Interfaces;
 using Gallery.Server.Core.Services;
 using Gallery.Server.Features.Image.Services;
+using Gallery.Server.Features.Profile.Services;
 using Gallery.Server.Features.User.Services;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -100,6 +101,7 @@ builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -114,6 +116,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Data/default"));
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")),

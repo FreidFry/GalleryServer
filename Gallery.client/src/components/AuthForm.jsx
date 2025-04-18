@@ -39,7 +39,7 @@ export default function AuthForm() {
           };
 
       const response = isLogin
-        ? await axios.patch(url, payload, { withCredentials: true })
+        ? await axios.post(url, payload, { withCredentials: true })
         : await axios.post(url, payload, { withCredentials: true });
 
       if (response.status === 200) {

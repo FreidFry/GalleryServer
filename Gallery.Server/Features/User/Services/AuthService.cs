@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using static System.Net.WebRequestMethods;
 
 namespace Gallery.Server.Features.User.Services
 {
