@@ -15,7 +15,7 @@ namespace Gallery.Server.Features.Profile.Services
             _usersDbContext = appDbContext;
         }
 
-        public async Task<UserGetDto> GetByUdAsync(string UserId)
+        public async Task<UserGetDto> GetByIdAsync(string UserId)
         {
             UserGetDto userDto = await _usersDbContext.Users
                 .Where(u => u.UserId.ToString().ToUpper() == UserId.ToUpper())

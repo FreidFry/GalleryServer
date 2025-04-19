@@ -7,5 +7,7 @@ namespace Gallery.Server.Features.Image.Services
     {
         Task<IActionResult> Upload(ImageUploadDto UploadDto, HttpContext httpContext);
         Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, HttpContext httpContext);
+        Task<IActionResult> Remove(IEnumerable<string> ImageId, HttpContext httpContext);
+        Task<IActionResult> Update(ImageUpdateDto UpdateDto, HttpContext httpContext);
     }
 }

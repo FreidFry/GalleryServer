@@ -69,5 +69,45 @@ namespace Gallery.Server.Features.Image.Services
 
             return imgsNoPublish;
         }
+
+        public async Task<IActionResult> Remove(IEnumerable<string> ImageId, HttpContext httpContext)
+        {
+            string userId = httpContext.User.FindFirstValue("uid");
+            var user = await _AppDbContext.Users.FindAsync(Guid.Parse(userId));
+            if (user == null) 
+                return new NotFoundObjectResult("User not found.");
+            var images = await _AppDbContext.Images
+                .Where(i => ImageId.Contains(i.ImageId.ToString().ToLower()) && i.UserId == user.UserId)
+                .ToListAsync();
+            if (images.Count == 0)
+                return new NotFoundObjectResult("No images found for the provided IDs.");
+            foreach (var image in images)
+            {
+                if (File.Exists(image.ImageFilePath))
+                    File.Delete(image.ImageFilePath);
+            }
+            _AppDbContext.Images.RemoveRange(images);
+            await _AppDbContext.SaveChangesAsync();
+            return new OkResult();
+        }
+
+        public async Task<IActionResult> Update(ImageUpdateDto image, HttpContext httpContext)
+        {
+            string userId = httpContext.User.FindFirstValue("uid");
+            var updateImage = await _AppDbContext.Images
+                .Where(i => i.ImageId.ToString().ToLower() == image.ImageId.ToString().ToLower() && i.UserId == Guid.Parse(userId))
+                .FirstOrDefaultAsync();
+            if (updateImage == null)
+                return new NotFoundObjectResult("Image not found.");
+
+            updateImage.Name = image.Name;
+            updateImage.Description = image.Description;
+            updateImage.Publicity = image.Publicity;
+            updateImage.LastUpdate = DateTime.UtcNow;
+
+            _AppDbContext.Images.Update(updateImage);
+            await _AppDbContext.SaveChangesAsync();
+            return new OkResult();
+        }
     }
 }

@@ -32,6 +32,21 @@ namespace Gallery.Server.Controllers
             return Ok(result);
         }
 
+        [HttpDelete("remove")]
+        [Authorize]
+        public async Task<IActionResult> Remove([FromBody]List<string> imagesId)
+        {
+            var result = await _imageService.Remove(imagesId, HttpContext);
+            return result;
+        }
+
+        [HttpPut("update")]
+        [Authorize]
+        public async Task<IActionResult> Update([FromBody] ImageUpdateDto updateDto)
+        {
+            var result = await _imageService.Update(updateDto, HttpContext);
+            return result;
+        }
 
     }
 }

@@ -18,7 +18,7 @@ namespace Gallery.Server.Controllers
         [HttpGet("{UserId}")]
         public async Task<IActionResult> GetById([FromRoute] string UserId)
         {
-            var userDto = await _profileService.GetByUdAsync(UserId);
+            var userDto = await _profileService.GetByIdAsync(UserId);
             if (userDto == null)
                 return NotFound();
             return Ok(userDto);

@@ -5,11 +5,12 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
     public class ImageModel
     {
         public Guid ImageId { get; private set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public string ImageFilePath { get; private set; }
         public string? Description { get; set; }
         public string ImageUrl { get; private set; }
-        public DateTime CreateAt { get; private set; }
+        public DateTime CreateAt { get; private set; } = DateTime.UtcNow;
+        public DateTime LastUpdate { get; set; } = DateTime.UtcNow;
         public bool Publicity { get; set; }
 
         [JsonIgnore]
@@ -26,7 +27,6 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
             ImageFilePath = Path.Combine(Environment.CurrentDirectory, "Data", "UsersData", user.UserId.ToString(), "Gallery", $"{ImageId}_{fileName}");
             Description = description ?? string.Empty;
             ImageUrl = $"images/{user.UserId}/Gallery/{ImageId}_{fileName}";
-            CreateAt = DateTime.UtcNow;
             Publicity = publicity ?? true;
             User = user;
             UserId = user.UserId;
