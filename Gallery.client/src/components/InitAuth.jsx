@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-export default function InitAuth({ setIsLogin }) {
+export default function InitAuth({ setIsLogin, setUserId }) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +15,8 @@ export default function InitAuth({ setIsLogin }) {
 
         if (response.status === 200) {
           setIsLogin(true);
-          navigate("/Gallery");
+          setUserId(response.data.userId);
+          navigate(`/Gallery/${response.data.userId}`);
         } else {
           setIsLogin(false);
           navigate("/Login");

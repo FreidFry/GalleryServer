@@ -400,3 +400,5 @@ FodyWeavers.xsd
 *.sln.iml
 
 /Gallery.Server/appsettings.Development.json
+/Gallery.Server/Data/UsersData
+/.editorconfig

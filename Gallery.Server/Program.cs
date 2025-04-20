@@ -1,18 +1,16 @@
 using dotenv.net;
-using Gallery.Server.Data.db;
-using Gallery.Server.Interfaces;
-using Gallery.Server.Services;
+using Gallery.Server.Core.Interfaces;
+using Gallery.Server.Core.Services;
+using Gallery.Server.Features.Image.Services;
+using Gallery.Server.Features.Profile.Services;
+using Gallery.Server.Features.User.Services;
+using Gallery.Server.Infrastructure.Persistence.db;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-
-DotEnv.Load();
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
-
-if (string.IsNullOrEmpty(jwtKey))
-    throw new Exception("JWT_SECRET_KEY is not set in environment variables");
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +25,9 @@ builder.Services.AddResponseCompression(options =>
     options.EnableForHttps = true;
     options.MimeTypes = ["text/plain", "text/css", "application/javascript", "application/json", "image/svg+xml"];
 });
+
+DotEnv.Load(new DotEnvOptions(envFilePaths: ["../settings.env"]));
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
     {
@@ -67,8 +68,9 @@ builder.Services.AddHttpsRedirection(builder =>
     builder.HttpsPort = 443;
 });
 
-builder.Services.AddDbContext<UsersDbContext>(options =>
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services.AddCors(options =>
 {
@@ -88,10 +90,9 @@ builder.Services.AddLogging(builder =>
     builder.AddDebug();
 });
 
-DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "./Data/settings.env" }));
 builder.Services.Configure<JwtOptions>(options =>
 {
-    options.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+    options.SecretKey = jwtKey
                         ?? throw new InvalidOperationException("JWT_SECRET_KEY is not configured.");
     options.ExpiresDays = double.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRES_DAYS")
                         ?? throw new InvalidOperationException("JWT_EXPIRES_DAYS is not configured."));
@@ -99,6 +100,9 @@ builder.Services.Configure<JwtOptions>(options =>
 
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -107,16 +111,26 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 }
 
 app.UseCors("AllowAll");
 
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default")));
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))),
     RequestPath = "/default"
+});
+
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile")));
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))),
+    RequestPath = "/images"
 });
 
 if (app.Environment.IsDevelopment())
