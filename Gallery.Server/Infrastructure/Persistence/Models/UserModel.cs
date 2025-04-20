@@ -1,11 +1,14 @@
-﻿namespace Gallery.Server.Infrastructure.Persistence.Models
+﻿using Gallery.Server.Features.Profile.DTOs;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Gallery.Server.Infrastructure.Persistence.Models
 {
     public class UserModel
     {
         public Guid UserId { get; private set; }
         public string Username { get; private set; }
         public string PasswordHash { get; private set; }
-        public string AvatarFilePath { get; private set; }
+        public string AvatarFilePath { get; set; }
 
 
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
@@ -34,6 +37,23 @@
         public void UpdateLastLogin()
         {
             LastLogin = DateTime.UtcNow;
+        }
+
+        public string UpdateAvatar(UpdateProfileAvatar avatarFilePath)
+        {
+            string UserAvatarPath = Path.Combine(Environment.CurrentDirectory,
+                "Data",
+                "UsersData",
+                avatarFilePath.UserId.ToString()
+            );
+            if (!Directory.Exists(UserAvatarPath))
+                Directory.CreateDirectory(UserAvatarPath);
+
+            using (var stream = new FileStream(UserAvatarPath + $"/{Guid.NewGuid()}_{avatarFilePath.Avatar.FileName}", FileMode.Create))
+            {
+                avatarFilePath.Avatar.CopyTo(stream);
+            }
+            return $"images/{avatarFilePath.UserId}/{avatarFilePath.Avatar.FileName}";
         }
     }
 }

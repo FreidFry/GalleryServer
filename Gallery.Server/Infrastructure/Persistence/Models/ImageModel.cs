@@ -20,11 +20,11 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
 
         public ImageModel() { }
 
-        private ImageModel(string name, string fileName, string? description, bool? publicity, UserModel user)
+        ImageModel(string name, string fileName, string? description, bool? publicity, UserModel user)
         {
             ImageId = Guid.NewGuid();
             Name = name;
-            ImageFilePath = Path.Combine(Environment.CurrentDirectory, "Data", "UsersData", user.UserId.ToString(), "Gallery", $"{ImageId}_{fileName}");
+            ImageFilePath = GetImageFilePath(fileName);
             Description = description ?? string.Empty;
             ImageUrl = $"images/{user.UserId}/Gallery/{ImageId}_{fileName}";
             Publicity = publicity ?? true;
@@ -32,6 +32,15 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
             UserId = user.UserId;
         }
         public static ImageModel Create(string name, string fileName, string? description, bool? publicity, UserModel user) =>
-            new ImageModel(name, fileName, description, publicity, user);
+            new(name, fileName, description, publicity, user);
+
+        string GetImageFilePath(string fileName) =>
+            Path.Combine(Environment.CurrentDirectory,
+                "Data",
+                "UsersData",
+                UserId.ToString(),
+                "Gallery",
+                $"{ImageId}_{fileName}"
+            );
     }
 }

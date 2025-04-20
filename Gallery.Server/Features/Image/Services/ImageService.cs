@@ -3,22 +3,18 @@ using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Security.Claims;
 
 namespace Gallery.Server.Features.Image.Services
 {
-    public class ImageService : IImageService
+    public class ImageService(AppDbContext dbContext) : IImageService
     {
-        private readonly AppDbContext _AppDbContext;
-
-        public ImageService(AppDbContext dbContext)
-        {
-            _AppDbContext = dbContext;
-        }
+        private readonly AppDbContext _AppDbContext = dbContext;
 
         public async Task<IActionResult> Upload(ImageUploadDto request, HttpContext httpContext)
         {
-            string userId = httpContext.User.FindFirstValue("uid");
+            string userId = httpContext.User.FindFirstValue("uid")?? string.Empty;
 
             if (request.Image == null || request.Image.Length == 0)
                 return new BadRequestObjectResult("No image file provided.");
@@ -46,34 +42,62 @@ namespace Gallery.Server.Features.Image.Services
             return new OkResult();
         }
 
-        public async Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, HttpContext httpContext)
+        public async Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, string SortBy, string OrderBy, HttpContext httpContext)
         {
-            string cookieUid = httpContext.User.FindFirstValue("uid");
-            bool isOwner = false;
-            var user = await _AppDbContext.Users.FindAsync(Guid.Parse(TargetUid));
+            if (!Guid.TryParse(TargetUid, out Guid targetUserId))
+                return [];
 
-            if (cookieUid.ToUpper() == TargetUid.ToUpper())
-                isOwner = true;
+            var query = _AppDbContext.Images.AsQueryable();
 
-            if (isOwner)
+            if(string.IsNullOrEmpty(SortBy))
+                SortBy = "CreateAt";
+            if (string.IsNullOrEmpty(OrderBy))
+                OrderBy = "desc";
+
+            var CookieId = httpContext.User.FindFirstValue("uid");
+            if (!Guid.TryParse(CookieId, out Guid CookieUid) || targetUserId != CookieUid)
             {
-                var imgs = await _AppDbContext.Images.Where(u => u.UserId == Guid.Parse(TargetUid))
-                    .Select(i => ImageGetDto.FromModel(i))
-                    .ToListAsync();
-                return imgs;
+                query = query.Where(i => i.Publicity == true);
             }
-            var imgsNoPublish = await _AppDbContext.Images
-                .Where(x => x.UserId == Guid.Parse(TargetUid) && x.Publicity == false)
-                .Select(i => ImageGetDto.FromModel(i))
-                .ToListAsync();
 
-            return imgsNoPublish;
+            var propertyInfo = typeof(ImageModel).GetProperty(SortBy);
+            if (propertyInfo == null)
+                return [];
+
+            var parameter = Expression.Parameter(typeof(ImageModel), "i");
+            var property = Expression.Property(parameter, propertyInfo);
+            var lambda = Expression.Lambda(property, parameter);
+
+            var methodName = OrderBy.ToLower() == "asc" ? "OrderBy" : "OrderByDescending";
+
+            var methodCallExpressin = Expression.Call(
+                typeof(Queryable),
+                methodName,
+                [typeof(ImageModel), propertyInfo.PropertyType],
+                query.Expression,
+                lambda
+            );
+
+            query = query.Provider.CreateQuery<ImageModel>(methodCallExpressin);
+
+            var images = await query
+                .Select(img => new ImageGetDto
+                {
+                    ImageId = img.ImageId,
+                    Name = img.Name ?? string.Empty,
+                    Description = img.Description ?? string.Empty,
+                    CreateAt = img.CreateAt,
+                    ImageUrl = img.ImageUrl
+                }).ToListAsync();
+
+            return images;
         }
+
 
         public async Task<IActionResult> Remove(IEnumerable<string> ImageId, HttpContext httpContext)
         {
-            string userId = httpContext.User.FindFirstValue("uid");
-            var user = await _AppDbContext.Users.FindAsync(Guid.Parse(userId));
+            Guid userId = Guid.Parse(httpContext.User.FindFirstValue("uid") ?? string.Empty);
+            var user = await _AppDbContext.Users.FindAsync(userId);
             if (user == null) 
                 return new NotFoundObjectResult("User not found.");
             var images = await _AppDbContext.Images
@@ -93,9 +117,9 @@ namespace Gallery.Server.Features.Image.Services
 
         public async Task<IActionResult> Update(ImageUpdateDto image, HttpContext httpContext)
         {
-            string userId = httpContext.User.FindFirstValue("uid");
+            Guid userId = Guid.Parse(httpContext.User.FindFirstValue("uid") ?? string.Empty);
             var updateImage = await _AppDbContext.Images
-                .Where(i => i.ImageId.ToString().ToLower() == image.ImageId.ToString().ToLower() && i.UserId == Guid.Parse(userId))
+                .Where(i => i.ImageId == image.ImageId && i.UserId == userId)
                 .FirstOrDefaultAsync();
             if (updateImage == null)
                 return new NotFoundObjectResult("Image not found.");

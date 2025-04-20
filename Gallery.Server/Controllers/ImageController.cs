@@ -25,16 +25,18 @@ namespace Gallery.Server.Controllers
         }
 
         [HttpGet("getall/{targetUid}")]
-        [Authorize]
-        public async Task<IActionResult> GetAll(string targetUid)
+        public async Task<IActionResult> GetAll([FromRoute] string targetUid, [FromQuery] string? SortBy, [FromQuery] string? OrderBy)
         {
-            var result = await _imageService.GetAll(targetUid, HttpContext);
+            var result = await _imageService.GetAll(targetUid, 
+                SortBy ?? string.Empty,
+                OrderBy ?? string.Empty,
+                HttpContext);
             return Ok(result);
         }
 
         [HttpDelete("remove")]
         [Authorize]
-        public async Task<IActionResult> Remove([FromBody]List<string> imagesId)
+        public async Task<IActionResult> Remove([FromBody] List<string> imagesId)
         {
             var result = await _imageService.Remove(imagesId, HttpContext);
             return result;

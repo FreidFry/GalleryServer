@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -116,19 +117,19 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
-if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")))
-    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Data/default"));
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default")));
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/default")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))),
     RequestPath = "/default"
 });
 
-if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData")))
-    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData"));
+if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))))
+    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile")));
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data/UsersData")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))),
     RequestPath = "/images"
 });
 
