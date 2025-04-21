@@ -1,10 +1,15 @@
 using dotenv.net;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Gallery.Server.Core.Interfaces;
 using Gallery.Server.Core.Services;
+using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Features.Image.Services;
+using Gallery.Server.Features.Image.Validations;
 using Gallery.Server.Features.Profile.Services;
 using Gallery.Server.Features.User.Services;
 using Gallery.Server.Infrastructure.Persistence.db;
+using Gallery.Server.Infrastructure.Persistence.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -59,7 +64,7 @@ builder.WebHost.ConfigureKestrel(options =>
     options.ListenAnyIP(8080); // HTTP
     options.ListenAnyIP(8081, listenOptions =>
     {
-        listenOptions.UseHttps(); // важно
+        listenOptions.UseHttps();
     });
 });
 builder.Services.AddHttpsRedirection(builder =>
@@ -102,6 +107,9 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IFileStorage, FileStorage>();
+builder.Services.AddScoped<IValidator<ImageUploadDto>, ImageUploadValidator>();
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

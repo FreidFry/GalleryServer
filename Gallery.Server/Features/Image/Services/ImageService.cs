@@ -1,4 +1,6 @@
-﻿using Gallery.Server.Features.Image.DTOs;
+﻿using FluentValidation;
+using Gallery.Server.Core.Interfaces;
+using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -8,38 +10,42 @@ using System.Security.Claims;
 
 namespace Gallery.Server.Features.Image.Services
 {
-    public class ImageService(AppDbContext dbContext) : IImageService
+    public class ImageService(AppDbContext dbContext, IValidator<ImageUploadDto> validator, IFileStorage fileStorage) : IImageService
     {
         private readonly AppDbContext _AppDbContext = dbContext;
+        private readonly IValidator<ImageUploadDto> _validator = validator;
+        private readonly IFileStorage _fileStorage = fileStorage;
 
         public async Task<IActionResult> Upload(ImageUploadDto request, HttpContext httpContext)
         {
-            string userId = httpContext.User.FindFirstValue("uid")?? string.Empty;
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                return new BadRequestObjectResult(validationResult.Errors);
 
-            if (request.Image == null || request.Image.Length == 0)
-                return new BadRequestObjectResult("No image file provided.");
-
-            if (string.IsNullOrEmpty(request.Name))
-                return new BadRequestObjectResult("Image name is required.");
-
-            var user = await _AppDbContext.Users.FindAsync(Guid.Parse(userId));
-
+            var userId = httpContext.User.FindFirstValue("uid");
+            if (!Guid.TryParse(userId, out Guid userGuid))
+                return new BadRequestObjectResult("Invalid user ID.");
+            var user = await _AppDbContext.Users.FindAsync(userGuid);
             if (user == null)
                 return new NotFoundObjectResult("User not found.");
 
-            var imageModel = ImageModel.Create(request.Name, request.Image.FileName, request.Description, request.Publicity, user);
+            var Image = ImageModel.Create(
+                request.Name ?? string.Empty,
+                request.Image.FileName,
+                request.Description,
+                request.Publicity,
+                user
+            );
 
-            var dir = Path.GetDirectoryName(imageModel.ImageFilePath);
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir!);
+            var filepath = await _fileStorage.SaveFileAsync(request.Image, $"Data/UsersData/{user.UserId}/Gallery", Image.Name);
+            Image.RealImagePath = filepath;
 
-            using (var stream = new FileStream(imageModel.ImageFilePath, FileMode.Create))
-                await request.Image.CopyToAsync(stream);
+            Image.ImageUrl = _fileStorage.GetFilePath(filepath);
 
-            _AppDbContext.Images.Add(imageModel);
+            await _AppDbContext.Images.AddAsync(Image);
             await _AppDbContext.SaveChangesAsync();
-
             return new OkResult();
+
         }
 
         public async Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, string SortBy, string OrderBy, HttpContext httpContext)
@@ -49,7 +55,7 @@ namespace Gallery.Server.Features.Image.Services
 
             var query = _AppDbContext.Images.AsQueryable();
 
-            if(string.IsNullOrEmpty(SortBy))
+            if (string.IsNullOrEmpty(SortBy))
                 SortBy = "CreateAt";
             if (string.IsNullOrEmpty(OrderBy))
                 OrderBy = "desc";
@@ -93,12 +99,11 @@ namespace Gallery.Server.Features.Image.Services
             return images;
         }
 
-
         public async Task<IActionResult> Remove(IEnumerable<string> ImageId, HttpContext httpContext)
         {
             Guid userId = Guid.Parse(httpContext.User.FindFirstValue("uid") ?? string.Empty);
             var user = await _AppDbContext.Users.FindAsync(userId);
-            if (user == null) 
+            if (user == null)
                 return new NotFoundObjectResult("User not found.");
             var images = await _AppDbContext.Images
                 .Where(i => ImageId.Contains(i.ImageId.ToString().ToLower()) && i.UserId == user.UserId)
@@ -107,8 +112,8 @@ namespace Gallery.Server.Features.Image.Services
                 return new NotFoundObjectResult("No images found for the provided IDs.");
             foreach (var image in images)
             {
-                if (File.Exists(image.ImageFilePath))
-                    File.Delete(image.ImageFilePath);
+                if (File.Exists(image.RealImagePath))
+                    File.Delete(image.RealImagePath);
             }
             _AppDbContext.Images.RemoveRange(images);
             await _AppDbContext.SaveChangesAsync();

@@ -14,7 +14,7 @@ namespace Gallery.Server.Infrastructure.Persistence.Configurations
             builder.Property(i => i.Name)
                    .IsRequired()
                    .HasMaxLength(100);
-            builder.Property(i => i.ImageFilePath)
+            builder.Property(i => i.RealImagePath)
                    .IsRequired();
             builder.Property(i => i.Description)
                    .IsRequired(false);
