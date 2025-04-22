@@ -1,6 +1,7 @@
 using dotenv.net;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Gallery.Server.Core.Helpers;
 using Gallery.Server.Core.Interfaces;
 using Gallery.Server.Core.Services;
 using Gallery.Server.Features.Image.DTOs;
@@ -81,11 +82,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         builder =>
         {
-            builder.WithOrigins("https://localhost:24815")
+            builder.WithOrigins("https://localhost:24815", "http://localhost:24815")
                    .AllowAnyMethod()
                    .AllowAnyHeader()
                    .AllowCredentials();
-
         });
 });
 builder.Services.AddLogging(builder =>
@@ -109,6 +109,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IFileStorage, FileStorage>();
 builder.Services.AddScoped<IValidator<ImageUploadDto>, ImageUploadValidator>();
+builder.Services.AddScoped<IHttpContextHelper, HttpContextHelper>();
 builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -124,20 +125,18 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
-if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))))
-    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default")));
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Default"))),
-    RequestPath = "/default"
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data", "default")),
+    RequestPath = "/default",
+    ServeUnknownFileTypes = true
 });
 
-if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))))
-    Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile")));
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("UserDataPath:Profile"))),
-    RequestPath = "/images"
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("FileStorage:UserDataBasePath"))),
+    RequestPath = "/images",
+    ServeUnknownFileTypes = true
 });
 
 if (app.Environment.IsDevelopment())

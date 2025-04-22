@@ -1,5 +1,4 @@
 ﻿using Gallery.Server.Features.Profile.DTOs;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Gallery.Server.Infrastructure.Persistence.Models
 {
@@ -8,7 +7,8 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
         public Guid UserId { get; private set; }
         public string Username { get; private set; }
         public string PasswordHash { get; private set; }
-        public string AvatarFilePath { get; set; }
+        public string  AvatarFilePath { get; set; }
+        public string AvatarUrl { get; set; }
 
 
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
@@ -19,14 +19,13 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
 
         UserModel(string username, string passwordHash)
         {
-
-
             UserId = Guid.NewGuid();
             Username = username;
             PasswordHash = passwordHash;
             CreatedAt = DateTime.UtcNow;
             LastLogin = DateTime.UtcNow;
-            AvatarFilePath = @"/default/img/defaultUserAvatar.png";
+            AvatarUrl = @"default/img/defaultUserAvatar.png";
+            AvatarFilePath = @$"{Environment.CurrentDirectory}/Data/default/img/defaultUserAvatar.png";
         }
 
         public static UserModel CreateUser(string username, string passwordHash)
@@ -44,16 +43,18 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
             string UserAvatarPath = Path.Combine(Environment.CurrentDirectory,
                 "Data",
                 "UsersData",
-                avatarFilePath.UserId.ToString()
+                avatarFilePath.UserId.ToString(),
+                "Profile"
             );
             if (!Directory.Exists(UserAvatarPath))
                 Directory.CreateDirectory(UserAvatarPath);
 
-            using (var stream = new FileStream(UserAvatarPath + $"/{Guid.NewGuid()}_{avatarFilePath.Avatar.FileName}", FileMode.Create))
+            var fileName = $"{Guid.NewGuid()}_{avatarFilePath.Avatar.FileName}";
+            using (var stream = new FileStream(Path.Combine(UserAvatarPath, fileName), FileMode.Create))
             {
                 avatarFilePath.Avatar.CopyTo(stream);
             }
-            return $"images/{avatarFilePath.UserId}/{avatarFilePath.Avatar.FileName}";
+            return $"images/{avatarFilePath.UserId}/Profile/{fileName}";
         }
     }
 }

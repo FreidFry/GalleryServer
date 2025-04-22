@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gallery.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250421165915_qwasdwqedsedqweq")]
-    partial class qwasdwqedsedqweq
+    [Migration("20250421235053_avatarUrlAndTumbnails")]
+    partial class avatarUrlAndTumbnails
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -74,6 +74,10 @@ namespace Gallery.Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("AvatarFilePath")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AvatarUrl")
                         .IsRequired()
                         .HasColumnType("TEXT");
 

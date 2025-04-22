@@ -16,10 +16,13 @@ namespace Gallery.Server.Infrastructure.Persistence.Storage
         public async Task<string> SaveFileAsync(IFormFile file, string directory, string fileName)
         {
             var uploadPath = Path.Combine(_environment.ContentRootPath, directory);
+            
             if (!Directory.Exists(uploadPath))
+            {
                 Directory.CreateDirectory(uploadPath);
+            }
 
-            var uniqueFileName = $"{Guid.NewGuid()}_{fileName}{Path.GetExtension(file.FileName)}";
+            var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
             var filePath = Path.Combine(uploadPath, uniqueFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -42,11 +45,18 @@ namespace Gallery.Server.Infrastructure.Persistence.Storage
             return File.Exists(filePath);
         }
 
-        public string GetFilePath(string filePath)
+        public string GetFileUrl(string directory, string filePath, Guid userId)
         {
-            var relativeFilePath = Path.GetRelativePath(_environment.ContentRootPath, filePath);
-            return $"{relativeFilePath.Replace("\\", "/")}";
+            var fileName = Path.GetFileName(filePath);
+            return $"/images/{userId}/{directory}/{fileName}";
         }
 
+        public string GetFilePath(string directory, Guid userId)
+        {
+            var basePath = Path.Combine(_environment.ContentRootPath, "Data", "UsersData", userId.ToString(), directory);
+            if (!Directory.Exists(basePath))
+                Directory.CreateDirectory(basePath);
+            return basePath;
+        }
     }
 }
