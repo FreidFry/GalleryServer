@@ -42,7 +42,7 @@ const Profile: React.FC = () => {
       await axios.put('https://localhost:32778/profile/updateavatar', formData, {
         withCredentials: true,
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'multipart/form-data'
         },
       });
       // Refetch profile data

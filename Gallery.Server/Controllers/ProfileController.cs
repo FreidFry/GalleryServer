@@ -50,7 +50,7 @@ namespace Gallery.Server.Controllers
         {
             if (userUpdateDto == null)
                 return BadRequest("User update DTO cannot be null.");
-            _profileService.UpdateProfileAvatar(userUpdateDto, HttpContext);
+            await _profileService.UpdateProfileAvatarAsync(userUpdateDto, HttpContext);
             return Ok();
         }
     }

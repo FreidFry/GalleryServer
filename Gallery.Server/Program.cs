@@ -7,7 +7,9 @@ using Gallery.Server.Core.Services;
 using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Features.Image.Services;
 using Gallery.Server.Features.Image.Validations;
+using Gallery.Server.Features.Profile.DTOs;
 using Gallery.Server.Features.Profile.Services;
+using Gallery.Server.Features.Profile.Validations;
 using Gallery.Server.Features.User.Services;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Storage;
@@ -109,6 +111,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IFileStorage, FileStorage>();
 builder.Services.AddScoped<IValidator<ImageUploadDto>, ImageUploadValidator>();
+builder.Services.AddScoped<IValidator<UpdateProfileAvatar>, ProfileAvatarValidator>();
 builder.Services.AddScoped<IHttpContextHelper, HttpContextHelper>();
 builder.Services.AddFluentValidationAutoValidation();
 

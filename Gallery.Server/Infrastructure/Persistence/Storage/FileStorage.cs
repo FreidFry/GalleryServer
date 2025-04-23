@@ -22,7 +22,7 @@ namespace Gallery.Server.Infrastructure.Persistence.Storage
                 Directory.CreateDirectory(uploadPath);
             }
 
-            var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
+            var uniqueFileName = $"{Guid.NewGuid()}_{fileName}{Path.GetExtension(file.FileName)}";
             var filePath = Path.Combine(uploadPath, uniqueFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -35,9 +35,11 @@ namespace Gallery.Server.Infrastructure.Persistence.Storage
 
         public Task DeleteFileAsync(string filePath)
         {
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-            return Task.CompletedTask;
+            return Task.Run(() =>
+            {
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+            });
         }
 
         public bool FileExists(string filePath)

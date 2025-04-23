@@ -1,4 +1,5 @@
-﻿using Gallery.Server.Core.Interfaces;
+﻿using FluentValidation;
+using Gallery.Server.Core.Interfaces;
 using Gallery.Server.Features.Profile.DTOs;
 using Gallery.Server.Features.User.DTO;
 using Gallery.Server.Infrastructure.Persistence.db;
@@ -10,18 +11,20 @@ namespace Gallery.Server.Features.Profile.Services
 {
     public class ProfileService : IProfileService
     {
-        private readonly AppDbContext _usersDbContext;
+        private readonly AppDbContext _AppDbContext;
         private readonly IFileStorage _fileStorage;
+        private readonly IValidator<UpdateProfileAvatar> _validator;
 
-        public ProfileService(AppDbContext appDbContext, IFileStorage fileStorage)
+        public ProfileService(AppDbContext appDbContext, IFileStorage fileStorage, IValidator<UpdateProfileAvatar> validator)
         {
-            _usersDbContext = appDbContext;
+            _AppDbContext = appDbContext;
             _fileStorage = fileStorage;
+            _validator = validator;
         }
 
         public async Task<UserGetDto> GetByIdAsync(string UserId)
         {
-            UserGetDto userDto = await _usersDbContext.Users
+            UserGetDto userDto = await _AppDbContext.Users
                 .Where(u => u.UserId.ToString().ToUpper() == UserId.ToUpper())
                 .Select(u => new UserGetDto
                 {
@@ -39,7 +42,7 @@ namespace Gallery.Server.Features.Profile.Services
         {
             string userId = httpContext.User.FindFirstValue("uid");
 
-            var userDto = await _usersDbContext.Users.Where(u => u.UserId.ToString().ToUpper() == userId.ToUpper()).
+            var userDto = await _AppDbContext.Users.Where(u => u.UserId.ToString().ToUpper() == userId.ToUpper()).
                 Select(u => new UserGetDto
                 {
                     Username = u.Username,
@@ -54,7 +57,7 @@ namespace Gallery.Server.Features.Profile.Services
 
         public async Task<IEnumerable<UserGetDto>> SearchAsync(string SearchString)
         {
-            var users = await _usersDbContext.Users
+            var users = await _AppDbContext.Users
                 .Where(u => u.Username.ToUpper().Contains(SearchString.ToUpper()))
                 .Select(u => new UserGetDto
                 {
@@ -68,40 +71,37 @@ namespace Gallery.Server.Features.Profile.Services
             return users;
         }
 
-        public async Task<IActionResult> UpdateProfileAvatar(UpdateProfileAvatar userUpdateDto, HttpContext httpContext)
+        public async Task<IActionResult> UpdateProfileAvatarAsync(UpdateProfileAvatar userUpdateDto, HttpContext httpContext)
         {
-            Guid userId = Guid.Parse(httpContext.User.FindFirstValue("uid"));
-            if (userUpdateDto.UserId != userId) 
-                return new BadRequestObjectResult("User ID mismatch.");
+            var validationResult = await _validator.ValidateAsync(userUpdateDto);
+            if (!validationResult.IsValid)
+                return new BadRequestObjectResult(validationResult.Errors);
 
-            var user = await _usersDbContext.Users
-                .Where(u => u.UserId == userId)
-                .FirstOrDefaultAsync();
+            var userId = httpContext.User.FindFirstValue("uid");
+            if (!Guid.TryParse(userId, out Guid userGuid))
+                return new BadRequestObjectResult("Invalid user ID.");
+
+            var user = await _AppDbContext.Users.FindAsync(userGuid);
             if (user == null)
                 return new NotFoundObjectResult("User not found.");
-
-            if (userUpdateDto.Avatar.Length > 5 * 1024 * 1024) // 5MB limit
-                return new BadRequestObjectResult("File is too large.");
-
-            Console.WriteLine($"Received file: {userUpdateDto.Avatar.FileName}, Size: {userUpdateDto.Avatar.Length} bytes");
+            if (user.UserId != userGuid)
+                return new BadRequestObjectResult("Invalid user ID.");
 
             if (!string.IsNullOrEmpty(user.AvatarFilePath) &&
                 !user.AvatarFilePath.Contains("default/img/defaultUserAvatar.png"))
-            {
                 await _fileStorage.DeleteFileAsync(user.AvatarFilePath);
-            }
 
             var filePath = await _fileStorage.SaveFileAsync(
                 userUpdateDto.Avatar,
-                _fileStorage.GetFilePath("Profile", userId),
-                userUpdateDto.Avatar.FileName
+                _fileStorage.GetFilePath("Profile", userGuid),
+                "Avatar"
             );
 
             user.AvatarFilePath = filePath;
-            user.AvatarUrl = _fileStorage.GetFileUrl("Profile", filePath, userId);
+            user.AvatarUrl = _fileStorage.GetFileUrl("Profile", filePath, userGuid);
 
-            _usersDbContext.Users.Update(user);
-            await _usersDbContext.SaveChangesAsync();
+            _AppDbContext.Users.Update(user);
+            await _AppDbContext.SaveChangesAsync();
             return new OkObjectResult(user);
         }
     }

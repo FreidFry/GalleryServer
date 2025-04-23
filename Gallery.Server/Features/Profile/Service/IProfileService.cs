@@ -9,6 +9,6 @@ namespace Gallery.Server.Features.Profile.Services
         Task<UserGetDto> GetByIdAsync(string UserId);
         Task<UserGetDto> GetCurrentAsync(HttpContext httpContext);
         Task<IEnumerable<UserGetDto>> SearchAsync(string SearchString);
-        Task<IActionResult> UpdateProfileAvatar(UpdateProfileAvatar userUpdateDto, HttpContext httpContext);
+        Task<IActionResult> UpdateProfileAvatarAsync(UpdateProfileAvatar userUpdateDto, HttpContext httpContext);
     }
 }
