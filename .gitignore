@@ -402,3 +402,4 @@ FodyWeavers.xsd
 /Gallery.Server/appsettings.Development.json
 /Gallery.Server/Data/UsersData
 /.editorconfig
+/Gallery.Server/Program (BackUp).cs
