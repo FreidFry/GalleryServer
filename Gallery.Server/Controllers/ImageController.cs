@@ -27,9 +27,10 @@ namespace Gallery.Server.Controllers
         [HttpGet("getall/{targetUid}")]
         public async Task<IActionResult> GetAll([FromRoute] string targetUid, [FromQuery] string? SortBy, [FromQuery] string? OrderBy)
         {
-            var result = await _imageService.GetAll(targetUid, 
-                SortBy,
-                OrderBy,
+            var result = await _imageService.GetAll(
+                targetUid,
+                SortBy ?? string.Empty,
+                OrderBy ?? string.Empty,
                 HttpContext);
             return Ok(result);
         }

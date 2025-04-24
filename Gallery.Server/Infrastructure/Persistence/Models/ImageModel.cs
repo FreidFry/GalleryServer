@@ -23,6 +23,7 @@ namespace Gallery.Server.Infrastructure.Persistence.Models
         public Guid UserId { get; private set; }
 
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public ImageModel() { }
 
         ImageModel(string? name, string fileName, string? description, bool? publicity, UserModel user)

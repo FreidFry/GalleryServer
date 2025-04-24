@@ -12,6 +12,8 @@ namespace Gallery.Server.Features.Image.Services
 {
     public class ImageService(AppDbContext dbContext, IValidator<ImageUploadDto> validator, IFileStorage fileStorage, IHttpContextHelper httpContextHelper) : IImageService
     {
+#pragma warning disable CS8604 // Possible null reference argument.
+
         private readonly AppDbContext _AppDbContext = dbContext;
         private readonly IValidator<ImageUploadDto> _validator = validator;
         private readonly IFileStorage _fileStorage = fileStorage;

@@ -12,12 +12,20 @@ interface User {
   lastLogin: string;
 }
 
+interface Image {
+  imageId: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  createAt: string;
+}
+
 const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: users, isLoading, error } = useQuery<User[]>({
+  const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ['users', searchQuery],
     queryFn: async () => {
       if (!searchQuery) return [];
@@ -30,20 +38,19 @@ const Home: React.FC = () => {
     enabled: searchQuery.length > 0
   });
 
+  const { data: randomImages, isLoading: isLoadingImages, error: imagesError } = useQuery<Image[]>({
+    queryKey: ['randomImages'],
+    queryFn: async () => {
+      const response = await axios.get('https://localhost:32778/image/random', {
+        withCredentials: true
+      });
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+  });
+
   const handleUserClick = (userId: string) => {
     navigate(`/gallery/${userId}`);
-  };
-
-  const handleMyGalleryClick = () => {
-    if (user?.id) {
-      navigate(`/gallery/${user.id}`);
-    }
-  };
-
-  const handleProfileClick = () => {
-    if (user?.id) {
-      navigate(`/profile/${user.id}`);
-    }
   };
 
   const getAvatarUrl = (avatarFilePath: string) => {
@@ -57,24 +64,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {user && (
-        <div className="mb-8 flex justify-center space-x-4">
-          <button
-            onClick={handleMyGalleryClick}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            My Gallery
-          </button>
-          <button
-            onClick={handleProfileClick}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            My Profile
-          </button>
-        </div>
-      )}
-
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-xl mx-auto mb-12">
         <input
           type="text"
           placeholder="Search users..."
@@ -83,13 +73,13 @@ const Home: React.FC = () => {
           className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         
-        {isLoading && (
+        {isLoadingUsers && (
           <div className="mt-4 text-center">
-            <p>Loading...</p>
+            <p>Loading users...</p>
           </div>
         )}
 
-        {error && (
+        {usersError && (
           <div className="mt-4 text-center text-red-500">
             <p>Error loading users. Please try again.</p>
           </div>
@@ -131,6 +121,62 @@ const Home: React.FC = () => {
         {users && users.length === 0 && searchQuery && (
           <div className="mt-4 text-center text-gray-500">
             <p>No users found</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold mb-6 text-center">Featured Images</h2>
+        
+        {isLoadingImages && (
+          <div className="text-center">
+            <p>Loading featured images...</p>
+          </div>
+        )}
+
+        {imagesError && (
+          <div className="text-center text-red-500">
+            <p>Error loading featured images. Please try again.</p>
+          </div>
+        )}
+
+        {randomImages && randomImages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {randomImages.map((image) => (
+              <div
+                key={image.imageId}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <div className="aspect-w-16 aspect-h-9">
+                  <img
+                    src={`https://localhost:32778${image.imageUrl}`}
+                    alt={image.name || 'Gallery image'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://localhost:32778/default/img/imageNotFound.png';
+                    }}
+                  />
+                </div>
+                <div className="p-4">
+                  {image.name && (
+                    <h3 className="font-medium text-gray-900 mb-1">{image.name}</h3>
+                  )}
+                  {image.description && (
+                    <p className="text-sm text-gray-500">{image.description}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(image.createAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {randomImages && randomImages.length === 0 && (
+          <div className="text-center text-gray-500">
+            <p>No featured images available</p>
           </div>
         )}
       </div>

@@ -29,6 +29,8 @@ namespace Gallery.Server.Core.Services
                 );
 
             var token = new JwtSecurityToken(
+                issuer: _options.issuer,
+                audience: _options.audience,
                 claims: claims,
                 signingCredentials: singningKey,
                 expires: DateTime.UtcNow.AddDays(_options.ExpiresDays)

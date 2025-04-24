@@ -1,6 +1,6 @@
-using dotenv.net;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Gallery.Server.Core.Extencions.LoadModules;
 using Gallery.Server.Core.Helpers;
 using Gallery.Server.Core.Interfaces;
 using Gallery.Server.Core.Services;
@@ -13,11 +13,9 @@ using Gallery.Server.Features.Profile.Validations;
 using Gallery.Server.Features.User.Services;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Storage;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using static Gallery.Server.Core.Extencions.LoadModules.JwtAutheticationExtencions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,76 +31,29 @@ builder.Services.AddResponseCompression(options =>
     options.MimeTypes = ["text/plain", "text/css", "application/javascript", "application/json", "image/svg+xml"];
 });
 
-DotEnv.Load(new DotEnvOptions(envFilePaths: ["../settings.env"]));
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-    {
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var token = context.HttpContext.Request.Cookies["jwt"];
-                if (token != null)
-                {
-                    context.Token = token;
-                }
-                return Task.CompletedTask;
-            }
-        };
-        options.TokenValidationParameters = new()
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-        };
-    });
-builder.Services.AddAuthorization();
+builder.Services
+    .AddJwtAuthentication()
+    .AddPortConfiguration(builder.WebHost);
 
 builder.Services.AddControllers();
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(8080); // HTTP
-    options.ListenAnyIP(8081, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
-});
-builder.Services.AddHttpsRedirection(builder =>
-{
-    builder.HttpsPort = 443;
-});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
 builder.Services.AddCors(options =>
-{
     options.AddPolicy("AllowAll",
         builder =>
-        {
             builder.WithOrigins("https://localhost:24815", "http://localhost:24815")
                    .AllowAnyMethod()
                    .AllowAnyHeader()
-                   .AllowCredentials();
-        });
-});
+                   .AllowCredentials()
+    )
+);
 builder.Services.AddLogging(builder =>
-{
-    builder.AddConsole();
-    builder.AddDebug();
-});
-
-builder.Services.Configure<JwtOptions>(options =>
-{
-    options.SecretKey = jwtKey
-                        ?? throw new InvalidOperationException("JWT_SECRET_KEY is not configured.");
-    options.ExpiresDays = double.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRES_DAYS")
-                        ?? throw new InvalidOperationException("JWT_EXPIRES_DAYS is not configured."));
-});
+    builder.AddConsole()
+    .AddDebug()
+);
 
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -135,12 +86,14 @@ app.UseStaticFiles(new StaticFileOptions
     ServeUnknownFileTypes = true
 });
 
+#pragma warning disable CS8604 // Possible null reference argument.
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("FileStorage:UserDataBasePath"))),
     RequestPath = "/images",
     ServeUnknownFileTypes = true
 });
+#pragma warning restore CS8604 // Possible null reference argument.
 
 if (app.Environment.IsDevelopment())
 {

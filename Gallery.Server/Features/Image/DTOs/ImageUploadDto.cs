@@ -4,7 +4,7 @@ namespace Gallery.Server.Features.Image.DTOs
 {
     public class ImageUploadDto
     {
-        [Required] public IFormFile Image { get; set; }
+        [Required] required public IFormFile Image { get; set; }
 
         public string? Name { get; set; }
 

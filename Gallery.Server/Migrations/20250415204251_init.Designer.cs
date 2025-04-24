@@ -12,7 +12,7 @@ namespace Gallery.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20250415204251_init")]
-    partial class init
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

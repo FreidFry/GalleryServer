@@ -72,7 +72,9 @@ namespace Gallery.Server.Features.User.Services
 
         public string Init(ClaimsPrincipal user)
         {
+#pragma warning disable CS8603 // Possible null reference return.
             return user.FindFirstValue("uid");
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         void SetJwtCookie(HttpContext http, UserModel user)

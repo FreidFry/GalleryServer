@@ -11,6 +11,8 @@ namespace Gallery.Server.Features.Profile.Services
 {
     public class ProfileService : IProfileService
     {
+#pragma warning disable CS8603 // Possible null reference return.
+
         private readonly AppDbContext _AppDbContext;
         private readonly IFileStorage _fileStorage;
         private readonly IValidator<UpdateProfileAvatar> _validator;
@@ -40,9 +42,13 @@ namespace Gallery.Server.Features.Profile.Services
 
         public async Task<UserGetDto> GetCurrentAsync(HttpContext httpContext)
         {
-            string userId = httpContext.User.FindFirstValue("uid");
+            var userIdClaim = httpContext.User.FindFirst("uid");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+            {
+                return null;
+            }
 
-            var userDto = await _AppDbContext.Users.Where(u => u.UserId.ToString().ToUpper() == userId.ToUpper()).
+            var userDto = await _AppDbContext.Users.Where(u => u.UserId == userId).
                 Select(u => new UserGetDto
                 {
                     Username = u.Username,

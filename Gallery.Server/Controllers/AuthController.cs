@@ -28,7 +28,6 @@ namespace Gallery.Server.Controllers
         }
 
         [HttpPost("logout")]
-        [Authorize]
         public IActionResult Logout()
         {
             _authService.Logout(HttpContext);

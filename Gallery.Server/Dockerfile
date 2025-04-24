@@ -6,11 +6,6 @@ EXPOSE 8081
 
 COPY ["../https/", "/https/"]
 
-ENV JWT_SECRET_KEY=YAMeteKUDa5a1F0RGALLERy5ervErJWT
-ENV JWT_EXPIRES_DAYS=12
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=yourpassword
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS with-node
 RUN apt-get update
 RUN apt-get install curl

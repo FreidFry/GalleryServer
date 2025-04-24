@@ -7,6 +7,8 @@ services:
     ports:
       - "32777:8080"  # HTTP
       - "32778:8081"  # HTTPS
+    env_file:
+      - ./Gallery.Server/settings.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - JWT_SECRET_KEY=YAMeteKUDa5a1F0RGALLERy5ervErJWT
