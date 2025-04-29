@@ -4,6 +4,7 @@ using Gallery.Server.Features.Image.DTOs;
 using Gallery.Server.Infrastructure.Persistence.db;
 using Gallery.Server.Infrastructure.Persistence.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Security.Claims;
@@ -19,9 +20,9 @@ namespace Gallery.Server.Features.Image.Services
         private readonly IFileStorage _fileStorage = fileStorage;
         private readonly IHttpContextHelper _httpContextHelper = httpContextHelper;
 
-        public async Task<IActionResult> Upload(ImageUploadDto request, HttpContext httpContext)
+        public async Task<IActionResult> UploadImageAsync(ImageUploadDto request, HttpContext httpContext, CancellationToken cancellationToken)
         {
-            var validationResult = await _validator.ValidateAsync(request);
+            var validationResult = await _validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
                 return new BadRequestObjectResult(validationResult.Errors);
 
@@ -29,7 +30,7 @@ namespace Gallery.Server.Features.Image.Services
             if (!Guid.TryParse(userId, out Guid userGuid))
                 return new BadRequestObjectResult("Invalid user ID.");
 
-            var user = await _AppDbContext.Users.FindAsync(userGuid);
+            var user = await _AppDbContext.Users.FindAsync(userGuid, cancellationToken);
             if (user == null)
                 return new NotFoundObjectResult("User not found.");
 
@@ -46,12 +47,12 @@ namespace Gallery.Server.Features.Image.Services
 
             Image.ImageUrl = _fileStorage.GetFileUrl("Gallery", filepath, userGuid);
 
-            await _AppDbContext.Images.AddAsync(Image);
-            await _AppDbContext.SaveChangesAsync();
+            await _AppDbContext.Images.AddAsync(Image, cancellationToken);
+            await _AppDbContext.SaveChangesAsync(cancellationToken);
             return new OkResult();
         }
 
-        public async Task<IEnumerable<ImageGetDto>> GetAll(string TargetUid, string SortBy, string OrderBy, HttpContext httpContext)
+        public async Task<IEnumerable<ImageGetDto>> GetImagesForUserAsync(string TargetUid, string SortBy, string OrderBy, HttpContext httpContext)
         {
             if (!Guid.TryParse(TargetUid, out Guid targetUserId))
                 return [];
@@ -112,7 +113,7 @@ namespace Gallery.Server.Features.Image.Services
             }
         }
 
-        public async Task<IActionResult> Remove(IEnumerable<string> ImageId, HttpContext httpContext)
+        public async Task<IActionResult> RemoveImageAsync(IEnumerable<string> ImageId, HttpContext httpContext, CancellationToken cancellationToken)
         {
             if (!_httpContextHelper.IsAuthenticated(httpContext))
                 return new UnauthorizedResult();
@@ -123,7 +124,7 @@ namespace Gallery.Server.Features.Image.Services
                 
             var images = await _AppDbContext.Images
                 .Where(i => ImageId.Contains(i.ImageId.ToString().ToLower()))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
                 
             if (images.Count == 0)
                 return new NotFoundObjectResult("No images found for the provided IDs.");
@@ -142,12 +143,12 @@ namespace Gallery.Server.Features.Image.Services
             }
             
             _AppDbContext.Images.RemoveRange(images);
-            await _AppDbContext.SaveChangesAsync();
+            await _AppDbContext.SaveChangesAsync(cancellationToken);
             
             return new OkResult();
         }
 
-        public async Task<IActionResult> Update(ImageUpdateDto image, HttpContext httpContext)
+        public async Task<IActionResult> UpdateImageInfoAsync(ImageUpdateDto image, HttpContext httpContext, CancellationToken cancellationToken)
         {
             if (!_httpContextHelper.IsAuthenticated(httpContext))
                 return new UnauthorizedResult();
@@ -158,7 +159,7 @@ namespace Gallery.Server.Features.Image.Services
                 
             var updateImage = await _AppDbContext.Images
                 .Where(i => i.ImageId == image.ImageId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (updateImage == null)
                 return new NotFoundObjectResult("Image not found.");
@@ -172,8 +173,37 @@ namespace Gallery.Server.Features.Image.Services
             updateImage.LastUpdate = DateTime.UtcNow;
 
             _AppDbContext.Images.Update(updateImage);
-            await _AppDbContext.SaveChangesAsync();
+            await _AppDbContext.SaveChangesAsync(cancellationToken);
             return new OkResult();
+        }
+
+        public async Task<IEnumerable<ImageGetDto>> GetRandomPublicImagesAsync(int page, int count, string[] excludeIds, HttpContext httpContext, CancellationToken cancellationToken)
+        {
+            var query = _AppDbContext.Images
+                .Where(i => i.Publicity == true)
+                .AsQueryable();
+
+            if (excludeIds != null && excludeIds.Any())
+            {
+                query = query.Where(i => !excludeIds.Contains(i.ImageId.ToString()));
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+            var skip = page * count;
+
+            if (skip >= totalCount)
+            {
+                return [];
+            }
+
+            var images = await query
+                .OrderBy(i => i.ImageId)
+                .Skip(skip)
+                .Take(count)
+                .Select(i => ImageGetDto.FromModel(i))
+                .ToListAsync(cancellationToken);
+
+            return images;
         }
     }
 }

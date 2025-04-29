@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using dotenv.net;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Gallery.Server.Core.Configuration.EnvConfigurations;

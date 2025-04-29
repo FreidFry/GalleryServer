@@ -2,6 +2,7 @@
 using Gallery.Server.Features.User.DTO;
 using Gallery.Server.Features.User.Services;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading;
 
 namespace Gallery.Server.Controllers
 {
@@ -16,15 +17,15 @@ namespace Gallery.Server.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegisterDto userDto)
+        public async Task<IActionResult> Register([FromBody] UserRegisterDto userDto, CancellationToken cancellationToken)
         {
-            return await _authService.RegisterAsync(userDto, HttpContext);
+            return await _authService.RegisterAsync(userDto, HttpContext, cancellationToken);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] UserLoginDto userDto)
+        public async Task<IActionResult> Login([FromBody] UserLoginDto userDto, CancellationToken cancellationToken)
         {
-            return await _authService.Login(userDto, HttpContext);
+            return await _authService.Login(userDto, HttpContext, cancellationToken);
         }
 
         [HttpPost("logout")]

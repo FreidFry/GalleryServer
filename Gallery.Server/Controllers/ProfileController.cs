@@ -17,9 +17,9 @@ namespace Gallery.Server.Controllers
         }
 
         [HttpGet("{UserId}")]
-        public async Task<IActionResult> GetById([FromRoute] string UserId)
+        public async Task<IActionResult> GetById([FromRoute] string UserId, CancellationToken cancellationToken)
         {
-            var userDto = await _profileService.GetByIdAsync(UserId);
+            var userDto = await _profileService.GetByIdAsync(UserId, cancellationToken);
             if (userDto == null)
                 return NotFound();
             return Ok(userDto);
@@ -27,30 +27,30 @@ namespace Gallery.Server.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetCurrent()
+        public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
         {
-            var userDto = await _profileService.GetCurrentAsync(HttpContext);
+            var userDto = await _profileService.GetCurrentAsync(HttpContext, cancellationToken);
             if (userDto == null)
                 return NotFound();
             return Ok(userDto);
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string? SearchString)
+        public async Task<IActionResult> Search([FromQuery] string? SearchString, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(SearchString))
                 return BadRequest("Search string cannot be null or empty.");
-            var users = await _profileService.SearchAsync(SearchString);
+            var users = await _profileService.SearchAsync(SearchString, cancellationToken);
             return Ok(users);
         }
 
         [HttpPut("updateavatar")]
         [Authorize]
-        public async Task<IActionResult> UpdateAvatar([FromForm] UpdateProfileAvatar userUpdateDto)
+        public async Task<IActionResult> UpdateAvatar([FromForm] UpdateProfileAvatar userUpdateDto, CancellationToken cancellationToken)
         {
             if (userUpdateDto == null)
                 return BadRequest("User update DTO cannot be null.");
-            await _profileService.UpdateProfileAvatarAsync(userUpdateDto, HttpContext);
+            await _profileService.UpdateProfileAvatarAsync(userUpdateDto, HttpContext, cancellationToken);
             return Ok();
         }
     }

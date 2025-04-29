@@ -24,7 +24,7 @@ namespace Gallery.Server.Features.Profile.Services
             _validator = validator;
         }
 
-        public async Task<UserGetDto> GetByIdAsync(string UserId)
+        public async Task<UserGetDto> GetByIdAsync(string UserId, CancellationToken cancellationToken)
         {
             UserGetDto userDto = await _AppDbContext.Users
                 .Where(u => u.UserId.ToString().ToUpper() == UserId.ToUpper())
@@ -40,7 +40,7 @@ namespace Gallery.Server.Features.Profile.Services
             return userDto;
         }
 
-        public async Task<UserGetDto> GetCurrentAsync(HttpContext httpContext)
+        public async Task<UserGetDto> GetCurrentAsync(HttpContext httpContext, CancellationToken cancellationToken)
         {
             var userIdClaim = httpContext.User.FindFirst("uid");
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
@@ -61,7 +61,7 @@ namespace Gallery.Server.Features.Profile.Services
             return userDto;
         }
 
-        public async Task<IEnumerable<UserGetDto>> SearchAsync(string SearchString)
+        public async Task<IEnumerable<UserGetDto>> SearchAsync(string SearchString, CancellationToken cancellationToken)
         {
             var users = await _AppDbContext.Users
                 .Where(u => u.Username.ToUpper().Contains(SearchString.ToUpper()))
@@ -77,9 +77,9 @@ namespace Gallery.Server.Features.Profile.Services
             return users;
         }
 
-        public async Task<IActionResult> UpdateProfileAvatarAsync(UpdateProfileAvatar userUpdateDto, HttpContext httpContext)
+        public async Task<IActionResult> UpdateProfileAvatarAsync(UpdateProfileAvatar userUpdateDto, HttpContext httpContext, CancellationToken cancellationToken)
         {
-            var validationResult = await _validator.ValidateAsync(userUpdateDto);
+            var validationResult = await _validator.ValidateAsync(userUpdateDto, cancellationToken);
             if (!validationResult.IsValid)
                 return new BadRequestObjectResult(validationResult.Errors);
 
@@ -87,7 +87,7 @@ namespace Gallery.Server.Features.Profile.Services
             if (!Guid.TryParse(userId, out Guid userGuid))
                 return new BadRequestObjectResult("Invalid user ID.");
 
-            var user = await _AppDbContext.Users.FindAsync(userGuid);
+            var user = await _AppDbContext.Users.FindAsync(userGuid, cancellationToken);
             if (user == null)
                 return new NotFoundObjectResult("User not found.");
             if (user.UserId != userGuid)
@@ -107,7 +107,7 @@ namespace Gallery.Server.Features.Profile.Services
             user.AvatarUrl = _fileStorage.GetFileUrl("Profile", filePath, userGuid);
 
             _AppDbContext.Users.Update(user);
-            await _AppDbContext.SaveChangesAsync();
+            await _AppDbContext.SaveChangesAsync(cancellationToken);
             return new OkObjectResult(user);
         }
     }

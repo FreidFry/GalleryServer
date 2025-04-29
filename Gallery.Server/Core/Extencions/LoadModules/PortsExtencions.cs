@@ -1,10 +1,8 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Gallery.Server.Core.Extencions.LoadModules
+﻿namespace Gallery.Server.Core.Extencions.LoadModules
 {
-    public static class PortsExtencions
+    internal static class PortsExtencions
     {
-        public static IServiceCollection AddPortConfiguration(this IServiceCollection services,
+        internal static IServiceCollection AddPortConfiguration(this IServiceCollection services,
             IWebHostBuilder hostBuilder)
         {
             hostBuilder.ConfigureKestrel(options =>

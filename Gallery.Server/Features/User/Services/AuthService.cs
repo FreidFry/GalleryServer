@@ -25,19 +25,19 @@ namespace Gallery.Server.Features.User.Services
             _envOptions = envOptions.Value;
         }
 
-        public async Task<IActionResult> RegisterAsync(UserRegisterDto UserDto, HttpContext httpContext)
+        public async Task<IActionResult> RegisterAsync(UserRegisterDto UserDto, HttpContext httpContext, CancellationToken cancellationToken)
         {
             if (UserDto.Password != UserDto.ConfirmPassword)
                 return new BadRequestObjectResult("Passwords do not match");
             var existingUser = await _appDbContext.Users
-                .FirstOrDefaultAsync(u => u.Username == UserDto.Username);
+                .FirstOrDefaultAsync(u => u.Username == UserDto.Username, cancellationToken);
 
             if (existingUser != null) return new ConflictObjectResult("User already exists");
 
             var newUser = UserModel.CreateUser(UserDto.Username, _passwordHasher.HashPassword(UserDto.Password));
 
-            await _appDbContext.Users.AddAsync(newUser);
-            await _appDbContext.SaveChangesAsync();
+            await _appDbContext.Users.AddAsync(newUser, cancellationToken);
+            await _appDbContext.SaveChangesAsync(cancellationToken);
 
             SetJwtCookie(httpContext, newUser);
             newUser.UpdateLastLogin();
@@ -45,10 +45,10 @@ namespace Gallery.Server.Features.User.Services
             return new OkResult();
         }
 
-        public async Task<IActionResult> Login(UserLoginDto UserDto, HttpContext httpContext)
+        public async Task<IActionResult> Login(UserLoginDto UserDto, HttpContext httpContext, CancellationToken cancellationToken)
         {
             var user = await _appDbContext.Users
-                .FirstOrDefaultAsync(u => u.Username == UserDto.Username);
+                .FirstOrDefaultAsync(u => u.Username == UserDto.Username, cancellationToken);
 
             if (user == null) return new NotFoundObjectResult("User not found");
             if (!_passwordHasher.VerifyPassword(UserDto.Password, user.PasswordHash))
@@ -60,7 +60,7 @@ namespace Gallery.Server.Features.User.Services
             user.UpdateLastLogin();
 
             _appDbContext.Users.Update(user);
-            await _appDbContext.SaveChangesAsync();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
 
             return new OkObjectResult(new { Message = "Login successful" });
         }

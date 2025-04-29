@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
@@ -22,8 +22,11 @@ interface Image {
 
 const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadedImageIds, setLoadedImageIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { user } = useAuth();
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ['users', searchQuery],
@@ -38,16 +41,66 @@ const Home: React.FC = () => {
     enabled: searchQuery.length > 0
   });
 
-  const { data: randomImages, isLoading: isLoadingImages, error: imagesError } = useQuery<Image[]>({
+  const {
+    data: imagesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingImages,
+    error: imagesError
+  } = useInfiniteQuery<Image[]>({
     queryKey: ['randomImages'],
-    queryFn: async () => {
-      const response = await axios.get('https://localhost:32778/image/random', {
+    queryFn: async ({ pageParam = 0 }) => {
+      const excludeIds = Array.from(loadedImageIds);
+      const response = await axios.get(`https://localhost:32778/image/random`, {
+        params: {
+          page: pageParam,
+          count: 12,
+          excludeIds: excludeIds
+        },
         withCredentials: true
       });
-      return response.data;
+      
+      const newImages = response.data;
+      
+      // Update the set of loaded image IDs
+      setLoadedImageIds(prev => {
+        const newSet = new Set(prev);
+        newImages.forEach((image: Image) => newSet.add(image.imageId));
+        return newSet;
+      });
+      
+      return newImages;
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === 12 ? allPages.length : undefined;
     },
     staleTime: 5 * 60 * 1000 // Cache for 5 minutes
   });
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleUserClick = (userId: string) => {
     navigate(`/gallery/${userId}`);
@@ -128,7 +181,7 @@ const Home: React.FC = () => {
       <div className="mb-12">
         <h2 className="text-2xl font-bold mb-6 text-center">Featured Images</h2>
         
-        {isLoadingImages && (
+        {isLoadingImages && !imagesData && (
           <div className="text-center">
             <p>Loading featured images...</p>
           </div>
@@ -140,9 +193,9 @@ const Home: React.FC = () => {
           </div>
         )}
 
-        {randomImages && randomImages.length > 0 && (
+        {imagesData && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {randomImages.map((image) => (
+            {imagesData.pages.flat().map((image) => (
               <div
                 key={image.imageId}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
@@ -174,7 +227,15 @@ const Home: React.FC = () => {
           </div>
         )}
 
-        {randomImages && randomImages.length === 0 && (
+        <div ref={loadMoreRef} className="h-10">
+          {isFetchingNextPage && (
+            <div className="text-center py-4">
+              <p>Loading more images...</p>
+            </div>
+          )}
+        </div>
+
+        {imagesData && imagesData.pages.flat().length === 0 && (
           <div className="text-center text-gray-500">
             <p>No featured images available</p>
           </div>

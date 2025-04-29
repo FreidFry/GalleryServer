@@ -11,8 +11,6 @@ services:
       - ./Gallery.Server/settings.env
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - JWT_SECRET_KEY=YAMeteKUDa5a1F0RGALLERy5ervErJWT
-      - JWT_EXPIRES_DAYS=12
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=yourpassword
     volumes:

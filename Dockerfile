@@ -1,5 +1,4 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
@@ -39,8 +38,6 @@ COPY --from=publish /app/publish .
 
 # Создаем папку Data (но не копируем файлы, они будут монтироваться извне)
 RUN mkdir -p /app/Data && \
-    chown -R $APP_UID:$APP_UID /app/Data && \
     chmod -R 755 /app/Data
 
-USER $APP_UID
 ENTRYPOINT ["dotnet", "Gallery.Server.dll"]

@@ -1,21 +1,6 @@
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using Gallery.Server.Core.Extencions.LoadModules;
-using Gallery.Server.Core.Helpers;
-using Gallery.Server.Core.Interfaces;
-using Gallery.Server.Core.Services;
-using Gallery.Server.Features.Image.DTOs;
-using Gallery.Server.Features.Image.Services;
-using Gallery.Server.Features.Image.Validations;
-using Gallery.Server.Features.Profile.DTOs;
-using Gallery.Server.Features.Profile.Services;
-using Gallery.Server.Features.Profile.Validations;
-using Gallery.Server.Features.User.Services;
 using Gallery.Server.Infrastructure.Persistence.db;
-using Gallery.Server.Infrastructure.Persistence.Storage;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
-using static Gallery.Server.Core.Extencions.LoadModules.JwtAutheticationExtencions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +18,8 @@ builder.Services.AddResponseCompression(options =>
 
 builder.Services
     .AddJwtAuthentication()
-    .AddPortConfiguration(builder.WebHost);
+    .AddPortConfiguration(builder.WebHost)
+    .AddDipencyInjections();
 
 builder.Services.AddControllers();
 
@@ -55,17 +41,6 @@ builder.Services.AddLogging(builder =>
     .AddDebug()
 );
 
-builder.Services.AddScoped<IJwtProvider, JwtProvider>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<IProfileService, ProfileService>();
-builder.Services.AddScoped<IFileStorage, FileStorage>();
-builder.Services.AddScoped<IValidator<ImageUploadDto>, ImageUploadValidator>();
-builder.Services.AddScoped<IValidator<UpdateProfileAvatar>, ProfileAvatarValidator>();
-builder.Services.AddScoped<IHttpContextHelper, HttpContextHelper>();
-builder.Services.AddFluentValidationAutoValidation();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -79,21 +54,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Data", "default")),
-    RequestPath = "/default",
-    ServeUnknownFileTypes = true
-});
-
-#pragma warning disable CS8604 // Possible null reference argument.
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), app.Configuration.GetValue<string>("FileStorage:UserDataBasePath"))),
-    RequestPath = "/images",
-    ServeUnknownFileTypes = true
-});
-#pragma warning restore CS8604 // Possible null reference argument.
+app.UseBasicStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
