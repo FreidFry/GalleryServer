@@ -2,10 +2,11 @@
 using Gallery.Server.Features.User.DTO;
 using Gallery.Server.Features.User.Services;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gallery.Server.Controllers
 {
+    [EnableRateLimiting("Login")]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase

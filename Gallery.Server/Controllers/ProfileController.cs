@@ -2,9 +2,11 @@
 using Gallery.Server.Features.Profile.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gallery.Server.Controllers
 {
+    [EnableRateLimiting("Global")]
     [Route("[controller]")]
     [ApiController]
     public class ProfileController : Controller

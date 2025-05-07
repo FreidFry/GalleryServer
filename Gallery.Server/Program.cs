@@ -19,7 +19,8 @@ builder.Services.AddResponseCompression(options =>
 builder.Services
     .AddJwtAuthentication()
     .AddPortConfiguration(builder.WebHost)
-    .AddDipencyInjections();
+    .AddDipencyInjections()
+    .AddRateLimitExtencions();
 
 builder.Services.AddControllers();
 
@@ -66,6 +67,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 
